@@ -49,7 +49,7 @@ time, and tokens received:
 
 ## Install
 
-Linux / macOS (amd64, arm64):
+### Linux / macOS (amd64, arm64)
 
 ```sh
 curl -o- https://raw.githubusercontent.com/38159/xagt/main/install.sh | bash
@@ -63,15 +63,29 @@ shell profile.
 To pin a specific version:
 
 ```sh
-curl -o- https://raw.githubusercontent.com/38159/xagt/main/install.sh | XAGT_VERSION=v0.0.2 bash
+curl -o- https://raw.githubusercontent.com/38159/xagt/main/install.sh | XAGT_VERSION=v0.0.3 bash
 ```
 
 Set `XAGT_DIR=/opt/xagt` to change the install location.
 
+### Windows (amd64, arm64)
+
+In PowerShell:
+
+```powershell
+irm https://raw.githubusercontent.com/38159/xagt/main/install.ps1 | iex
+```
+
+The installer puts `xagt.exe` in `%USERPROFILE%\.xagt\bin`, seeds a config
+template at `%USERPROFILE%\.xagt\xagt.toml`, and adds the bin directory and
+`XAGT_CONFIG` to your user environment (open a new terminal afterwards). Pin a
+version with `$env:XAGT_VERSION = 'v0.0.3'` before running; change the
+location with `$env:XAGT_DIR`.
+
 Verify:
 
 ```sh
-xagt --version   # → xagt v0.0.2
+xagt --version   # → xagt v0.0.3
 ```
 
 ## Update / uninstall
@@ -117,6 +131,7 @@ edits need no reload.
 ## Versions
 
 This repository is a **binary-only distribution channel**. Releases are git
-tags (`v0.0.1`, `v0.0.2`, …); each tag carries the prebuilt binaries
-(`dist/xagt-{linux,darwin}-{amd64,arm64}.tar.gz`). `main` holds only this page
-and `install.sh`.
+tags (`v0.0.1`, `v0.0.2`, …); each tag carries the prebuilt binaries —
+`dist/xagt-{linux,darwin}-{amd64,arm64}.tar.gz` and
+`dist/xagt-windows-{amd64,arm64}.zip`. `main` holds only this page,
+`install.sh` and `install.ps1`.
