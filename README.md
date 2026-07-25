@@ -27,13 +27,16 @@ prompt ──┬──▶ agent A answers ──▶ agent B reviews A ──┐
 with tools (files, shell, MCP servers, skills, long-term memory) and no
 approval prompts; autonomy is bounded by scope (`--yolo read|workspace|full`),
 a turn/time budget and an audit log, with optional cross-check gates
-(`--plan-check`, `--final-review`). The same executor is exposed by
+(`--plan-check`, `--final-review`). The executor can fan work out to
+parallel subagents (the `agents_run` tool): each gets the same tools and
+workspace with its own smaller budget, and cannot delegate further. The same executor is exposed by
 `xagt serve` as an OpenAI-compatible HTTP API plus an async task API, and by
 `xagt mcp-server` as an MCP tool (`run_task`) for other agents.
 
 ```sh
 xagt                            # interactive session — tools run unasked
 xagt --repl                     # same session, tool actions ask y/n first
+xagt --continue                 # reopen the most recent saved conversation
 xagt "Is it safe to share one http.Client across goroutines?"
 git diff | xagt "Review this change for bugs."
 xagt --cross-review "..."       # two agents cross-check each other
@@ -44,9 +47,10 @@ xagt update                     # self-update to the latest release
 
 The interactive session keeps the conversation as context, saves it under
 `~/.xagt/sessions` (continue any with `/resume`), streams token counts live
-and takes slash commands: `/help` `/status` `/agent` `/model` `/effort`
-`/mcp` `/skills` `/run` `/init` `/diff` `/review` `/resume` `/compact`
-`/clear` `/exit`. A bare `xagt` runs `/run` and `/init` tool actions without
+and takes slash commands: `/help` `/status` `/cost` `/agent` `/model`
+`/effort` `/mcp` `/skills` `/run` `/init` `/diff` `/review` `/resume`
+`/compact` `/clear` `/exit` (`--continue` / `--resume ID` reopen a saved
+conversation from the command line). A bare `xagt` runs `/run` and `/init` tool actions without
 asking (the skip-permissions default); start with `--repl` to approve each
 action with y/n. While a submission runs it shows a progress line — spinner,
 elapsed time, and tokens received so far:
