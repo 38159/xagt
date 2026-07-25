@@ -79,8 +79,8 @@ backslash continues the line, and Tab completes `/commands` and `@paths`.
 writes to the project's long-term memory; `?` shows the command list.
 
 The session quits only via `/exit`, Ctrl+C or Ctrl+Z — ESC never quits,
-and a bare `exit`/`quit` asks "did you mean /exit? [y/N]" locally instead
-of going to the model. A bare `xagt` runs `/run` and `/init` tool actions without
+and a bare `exit`/`quit` asks "did you mean /exit? [y/N]" locally first —
+y quits, n sends the word to the model as an ordinary prompt. A bare `xagt` runs `/run` and `/init` tool actions without
 asking (the skip-permissions default); start with `--repl` to approve each
 action with y/n. While a submission runs it shows a progress line — spinner,
 elapsed time, and tokens received so far:
