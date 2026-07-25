@@ -47,10 +47,14 @@ xagt update                     # self-update to the latest release
 
 The interactive session keeps the conversation as context, saves it under
 `~/.xagt/sessions` (continue any with `/resume`), streams token counts live
-and takes slash commands: `/help` `/status` `/cost` `/agent` `/model`
-`/effort` `/mcp` `/skills` `/run` `/init` `/diff` `/review` `/resume`
-`/compact` `/clear` `/exit` (`--continue` / `--resume ID` reopen a saved
-conversation from the command line). A bare `xagt` runs `/run` and `/init` tool actions without
+and takes slash commands (Tab completes them): `/help` `/status` `/cost`
+`/agent` `/model` `/effort` `/mcp` `/skills` `/run` `/init` `/diff`
+`/review` `/resume` `/attach` `/paste` `/compact` `/clear` `/exit`
+(`--continue` / `--resume ID` reopen a saved conversation from the command
+line). Multi-line clipboard pastes insert lines instead of submitting
+(bracketed paste), `@path` in a message inlines that text file, `/attach`
+queues files for the next message (`--attach PATH` for one-shot prompts),
+and `/paste` captures the OS clipboard. A bare `xagt` runs `/run` and `/init` tool actions without
 asking (the skip-permissions default); start with `--repl` to approve each
 action with y/n. While a submission runs it shows a progress line — spinner,
 elapsed time, and tokens received so far:
