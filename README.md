@@ -69,7 +69,18 @@ priority = "secondary"
 vision   = true
 ```
 
-The session quits only via `/exit`, Ctrl+C or Ctrl+Z — ESC never quits. A bare `xagt` runs `/run` and `/init` tool actions without
+The prompt is a readline-style editor: arrows move the cursor, Ctrl+A/E
+jump to line start/end, Alt+B/F move by words, Ctrl+W/K/U delete
+word/to-end/to-start, Up/Down recall past prompts, Ctrl+R
+reverse-searches them, ESC ESC rewinds the last exchange for editing,
+Shift+Tab toggles the approval mode, Ctrl+L clears the screen, a trailing
+backslash continues the line, and Tab completes `/commands` and `@paths`.
+`!CMD` runs a shell command and queues its output as context; `#NOTE`
+writes to the project's long-term memory; `?` shows the command list.
+
+The session quits only via `/exit`, Ctrl+C or Ctrl+Z — ESC never quits,
+and a bare `exit`/`quit` asks "did you mean /exit? [y/N]" locally instead
+of going to the model. A bare `xagt` runs `/run` and `/init` tool actions without
 asking (the skip-permissions default); start with `--repl` to approve each
 action with y/n. While a submission runs it shows a progress line — spinner,
 elapsed time, and tokens received so far:
