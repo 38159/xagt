@@ -32,19 +32,24 @@ a turn/time budget and an audit log, with optional cross-check gates
 `xagt mcp-server` as an MCP tool (`run_task`) for other agents.
 
 ```sh
+xagt                            # interactive session — tools run unasked
+xagt --repl                     # same session, tool actions ask y/n first
 xagt "Is it safe to share one http.Client across goroutines?"
 git diff | xagt "Review this change for bugs."
-xagt --repl                     # interactive session (Claude-style REPL)
 xagt --cross-review "..."       # two agents cross-check each other
 xagt run --yolo workspace "..." # autonomous executor, no approvals
 xagt run --repl "..."           # same, but every tool action asks y/n first
 xagt update                     # self-update to the latest release
 ```
 
-The REPL keeps the conversation as context, streams token counts live and
-takes slash commands: `/help` `/agent` `/model` `/effort` `/mcp` `/skills`
-`/compact` `/clear` `/exit`. While a submission runs it shows a progress
-line — spinner, elapsed time, and tokens received so far:
+The interactive session keeps the conversation as context, saves it under
+`~/.xagt/sessions` (continue any with `/resume`), streams token counts live
+and takes slash commands: `/help` `/status` `/agent` `/model` `/effort`
+`/mcp` `/skills` `/run` `/init` `/diff` `/review` `/resume` `/compact`
+`/clear` `/exit`. A bare `xagt` runs `/run` and `/init` tool actions without
+asking (the skip-permissions default); start with `--repl` to approve each
+action with y/n. While a submission runs it shows a progress line — spinner,
+elapsed time, and tokens received so far:
 
 ```
 ⠹ running… (3m 9s · ↓ 7.5k tokens)
