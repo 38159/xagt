@@ -52,9 +52,24 @@ and takes slash commands (Tab completes them): `/help` `/status` `/cost`
 `/review` `/resume` `/attach` `/paste` `/compact` `/clear` `/exit`
 (`--continue` / `--resume ID` reopen a saved conversation from the command
 line). Multi-line clipboard pastes insert lines instead of submitting
-(bracketed paste), `@path` in a message inlines that text file, `/attach`
+(bracketed paste), `@path` in a message inlines that file, `/attach`
 queues files for the next message (`--attach PATH` for one-shot prompts),
-and `/paste` captures the OS clipboard. A bare `xagt` runs `/run` and `/init` tool actions without
+and `/paste` captures the OS clipboard. Attachments cover plain text,
+`.docx` (built in) and `.pdf` (via `pdftotext` when installed). Images
+(`.png` `.jpg` `.gif` `.webp` `.bmp`) are sent to a vision-capable agent —
+declare one and it is used automatically whenever an image is attached:
+
+```toml
+[[agent]]
+name     = "qwen-vl"
+provider = "qwen"
+apikey   = "sk-..."
+model    = "qwen3-vl-plus"
+priority = "secondary"
+vision   = true
+```
+
+The session quits only via `/exit`, Ctrl+C or Ctrl+Z — ESC never quits. A bare `xagt` runs `/run` and `/init` tool actions without
 asking (the skip-permissions default); start with `--repl` to approve each
 action with y/n. While a submission runs it shows a progress line — spinner,
 elapsed time, and tokens received so far:
