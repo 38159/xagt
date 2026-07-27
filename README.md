@@ -33,12 +33,23 @@ workspace with its own smaller budget, and cannot delegate further. The same exe
 `xagt serve` as an OpenAI-compatible HTTP API plus an async task API, and by
 `xagt mcp-server` as an MCP tool (`run_task`) for other agents.
 
+**Multimodal.** Attach images, videos and audio for analysis — each media
+prompt is routed automatically to the first configured agent that declares
+the matching capability (`vision` / `video` / `audio`) — and generate
+images, videos and speech with `xagt gen`.
+
 ```sh
 xagt                            # interactive session — tools run unasked
 xagt --repl                     # same session, tool actions ask y/n first
 xagt --continue                 # reopen the most recent saved conversation
 xagt "Is it safe to share one http.Client across goroutines?"
 git diff | xagt "Review this change for bugs."
+xagt "what does this diagram show? @architecture.png"   # image analysis
+xagt "summarise what happens in @demo.mp4"              # video analysis
+xagt "transcribe @standup.mp3, list action items"       # audio analysis
+xagt gen image "a red panda reading a book, watercolor" # text-to-image
+xagt gen video "waves rolling onto a beach at dusk"     # text-to-video
+xagt gen speech --voice Cherry "Welcome to the meeting" # text-to-speech
 xagt --cross-review "..."       # two agents cross-check each other
 xagt run --yolo workspace "..." # autonomous executor, no approvals
 xagt run --repl "..."           # same, but every tool action asks y/n first
@@ -54,20 +65,61 @@ and takes slash commands (Tab completes them): `/help` `/status` `/cost`
 line). Multi-line clipboard pastes insert lines instead of submitting
 (bracketed paste), `@path` in a message inlines that file, `/attach`
 queues files for the next message (`--attach PATH` for one-shot prompts),
-and `/paste` captures the OS clipboard. Attachments cover plain text,
-`.docx` (built in) and `.pdf` (via `pdftotext` when installed). Images
-(`.png` `.jpg` `.gif` `.webp` `.bmp`) are sent to a vision-capable agent —
-declare one and it is used automatically whenever an image is attached:
+and `/paste` captures the OS clipboard (a screenshot is delegated to a
+vision agent for analysis immediately). Attachments cover plain text,
+`.docx` (built in) and `.pdf` (via `pdftotext` when installed), plus media:
+
+* **Images** (`.png` `.jpg` `.jpeg` `.gif` `.webp` `.bmp`, ≤ 10 MB) go to
+  an agent with `vision = true`.
+* **Videos** (`.mp4` `.mov` `.avi` `.mkv` `.webm`) go whole (≤ 50 MB) to an
+  agent with `video = true`; without one — or over the cap — xagt samples
+  up to 8 frames with ffmpeg (auto-installed on first need) and sends them
+  to any vision agent instead, and says so.
+* **Audio** (`.mp3` `.wav` `.m4a` `.aac` `.flac` `.ogg` `.opus`, ≤ 10 MB)
+  goes to an agent with `audio = true` (an omni model).
+
+Declare a capable agent once and it is used automatically whenever matching
+media is attached; an explicitly selected agent that lacks the flag refuses
+the prompt with a clear error instead of being silently rerouted:
 
 ```toml
 [[agent]]
-name     = "qwen-vl"
+name     = "qwen-vl"           # image + video analysis
 provider = "qwen"
 apikey   = "sk-..."
 model    = "qwen3-vl-plus"
 priority = "secondary"
 vision   = true
+video    = true
+
+[[agent]]
+name     = "qwen-omni"         # audio (+ image/video) analysis
+provider = "qwen"
+apikey   = "sk-..."
+model    = "qwen3-omni-flash"
+priority = "secondary"
+vision   = true
+video    = true
+audio    = true
 ```
+
+**`xagt gen` — media generation.** Text-to-image, text-to-video and
+text-to-speech through DashScope's native generation endpoints, using the
+same config: the first `qwen` / `qwen-cn` agent's `apikey` (or
+`--agent NAME`). Image and video jobs are asynchronous on the platform —
+xagt submits the task, narrates progress and downloads the result when it
+finishes (result URLs expire within a day, so the file on disk is the
+deliverable; `--out` picks where it lands, the saved path prints on stdout).
+
+```sh
+xagt gen image  "a lighthouse in a storm"            # default wan2.2-t2i-flash
+xagt gen image  --model qwen-image --size 1328*1328 -n 2 "…"
+xagt gen video  "time-lapse of clouds over mountains" # default wan2.2-t2v-plus
+xagt gen speech --voice Cherry "Hello from xagt"      # default qwen3-tts-flash
+```
+
+Generation models are separate from chat models — the agent's `model` field
+is not used by `xagt gen`; pick one with `--model`.
 
 The prompt is a readline-style editor: arrows move the cursor, Ctrl+A/E
 jump to line start/end, Alt+B/F move by words, Ctrl+W/K/U delete
