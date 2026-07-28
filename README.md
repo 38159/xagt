@@ -31,12 +31,21 @@ bounded to the directory you started it in.
 > the tests in internal/api are failing, fix them
 
   turn 1: grep({"pattern":"func Test","path":"internal/api"})
+    ↳ 12ms · internal/api/serve_test.go:14: func TestServeDrains (+6 lines)
   turn 1: shell({"command":"go test ./internal/api/"})
+    ↳ 4.1s · FAIL github.com/x/internal/api 4.084s (+22 lines)
   checkpoint: pre-run state stashed as 30d099c1b3b7
   turn 1: edit_file({"path":"internal/api/serve.go", …})
+    ↳ 3ms · replaced 1 occurrence(s) in /home/me/x/internal/api/serve.go
 
 ● Fixed: serve() closed the listener before draining. Tests pass.
 ```
+
+Every call is narrated on both sides — what was attempted, then what came
+back and how long it took — so a produced file's location is on screen
+whether or not the model repeats it, and a slow step never looks like a hung
+one. Paths in those lines are clickable in terminals that support OSC 8
+links.
 
 A question is still just answered — the model calls no tools when it needs
 none — and `/ask` guarantees it; `/tools off` (or `--no-tools`) turns acting
@@ -106,7 +115,7 @@ session banner lists what each kind of work will reach, so the routing is
 visible before anything is attached:
 
 ```
-xagt v0.0.15 — qwen/qwen3.7-max
+xagt v0.0.16 — qwen/qwen3.7-max
 text   qwen/qwen3.7-max · qwen-vl/qwen3-vl-plus · qwen-omni/qwen3-omni-flash
 image  qwen-vl/qwen3-vl-plus · qwen-omni/qwen3-omni-flash
 video  qwen-vl/qwen3-vl-plus
@@ -138,7 +147,8 @@ audio    = true
 **What the agent can do.** Read (`read_file` with numbered lines,
 `list_dir`, `glob` with `**`, `grep` over file contents), write
 (`write_file`, `edit_file` singly or as an atomic batch, `mkdir`,
-`move_file`, `delete_file`), run (`shell`, with `background=true` plus
+`move_file`, `delete_file`), deliver (`download_file`, which saves a finished
+file to your download folder), run (`shell`, with `background=true` plus
 `shell_output` / `shell_kill` for servers and watchers), plan
 (`update_plan`, shown in the terminal as it changes), delegate
 (`agents_run`), remember (`memory_*`, `skill`) and anything an MCP server
@@ -147,7 +157,10 @@ adds.
 Reads and writes are confined to the working directory. `--read-root PATH`
 (or `[tools] read_roots`) widens reading when a project legitimately needs a
 sibling checkout; `--yolo full` lifts the boundary entirely and is meant for
-a container.
+a container. The one exception is `download_file`: it writes to your download
+folder and nowhere else, under a name that must be a single file name, never
+overwriting — and the file it delivers is read under the same boundary as
+everything else.
 
 **Two capabilities stay closed until asked for**, because the authority you
 delegate covers what *you* asked for — not instructions that arrive inside a
@@ -170,7 +183,7 @@ same config: the first `qwen` / `qwen-cn` agent's `apikey` (or
 `--agent NAME`). Image and video jobs are asynchronous on the platform —
 xagt submits the task, narrates progress and downloads the result when it
 finishes (result URLs expire within a day, so the file on disk is the
-deliverable; `--out` picks where it lands, the saved path prints on stdout).
+deliverable).
 
 ```sh
 xagt gen image  "a lighthouse in a storm"            # default wan2.2-t2i-flash
@@ -181,6 +194,32 @@ xagt gen speech --voice Cherry "Hello from xagt"      # default qwen3-tts-flash
 
 Generation models are separate from chat models — the agent's `model` field
 is not used by `xagt gen`; pick one with `--model`.
+
+**Produced files arrive like downloads.** A file xagt makes *for you* goes to
+your operating system's download folder rather than whatever directory the
+session started in — `~/Downloads` on macOS and Windows, the freedesktop
+`XDG_DOWNLOAD_DIR` on Linux — and opens in the default application, the way a
+browser download does. That covers `xagt gen` output and anything the agent
+hands over with the `download_file` tool (a picture, a chart, an export;
+project files still go into the working directory with `write_file`).
+
+An existing file is never replaced: a second `rabbit.svg` becomes
+`rabbit-1.svg`, since that folder is full of files you are about to open. The
+saved path always prints on stdout — as a clickable link at a terminal, and as
+a bare path when the output is piped, so `xagt gen image "…" | xargs open`
+still works.
+
+```toml
+[downloads]
+# dir  = "~/Downloads"   # default: the OS folder; XAGT_DOWNLOAD_DIR overrides
+open = true              # open each file the agent delivers
+```
+
+`--out` sends a generated file elsewhere and `--no-open` leaves it closed.
+`[downloads] open` applies to the agent's own deliveries and additionally
+requires OS control (`--allow-computer` or `[computer]`): saving a file you
+asked for is delivery, but handing a model-authored file to the desktop's
+default handler is the machine capability, and it is gated like one.
 
 The prompt is a readline-style editor over the whole message, however many
 lines it runs to and however wide the terminal: a sentence longer than the
@@ -201,11 +240,12 @@ The session quits only via `/exit`, Ctrl+C or Ctrl+Z — ESC never quits,
 and a bare `exit`/`quit` asks "did you mean /exit? [y/N]" locally first —
 y quits, n sends the word to the model as an ordinary prompt. A bare `xagt` runs `/run` and `/init` tool actions without
 asking (the skip-permissions default); start with `--repl` to approve each
-action with y/n. While a submission runs it shows a progress line — spinner,
-elapsed time, and tokens received so far:
+action with y/n. While a submission runs it shows a progress line naming the
+step in flight, with elapsed time and tokens received so far. It stays up for
+the whole turn, so the stretches between output are visibly alive:
 
 ```
-⠹ running… (3m 9s · ↓ 7.5k tokens)
+⠹ shell… (3m 9s · ↓ 7.5k tokens)
 ```
 
 ## Install
@@ -224,7 +264,7 @@ shell profile.
 To pin a specific version:
 
 ```sh
-curl -o- https://raw.githubusercontent.com/38159/xagt/main/install.sh | XAGT_VERSION=v0.0.15 bash
+curl -o- https://raw.githubusercontent.com/38159/xagt/main/install.sh | XAGT_VERSION=v0.0.16 bash
 ```
 
 Set `XAGT_DIR=/opt/xagt` to change the install location.
@@ -240,13 +280,13 @@ irm https://raw.githubusercontent.com/38159/xagt/main/install.ps1 | iex
 The installer puts `xagt.exe` in `%USERPROFILE%\.xagt\bin`, seeds a config
 template at `%USERPROFILE%\.xagt\xagt.toml`, and adds the bin directory and
 `XAGT_CONFIG` to your user environment (open a new terminal afterwards). Pin a
-version with `$env:XAGT_VERSION = 'v0.0.15'` before running; change the
+version with `$env:XAGT_VERSION = 'v0.0.16'` before running; change the
 location with `$env:XAGT_DIR`.
 
 Verify:
 
 ```sh
-xagt --version   # → xagt v0.0.15
+xagt --version   # → xagt v0.0.16
 ```
 
 ## Update / uninstall
