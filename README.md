@@ -171,14 +171,20 @@ xagt gen speech --voice Cherry "Hello from xagt"      # default qwen3-tts-flash
 Generation models are separate from chat models — the agent's `model` field
 is not used by `xagt gen`; pick one with `--model`.
 
-The prompt is a readline-style editor: arrows move the cursor, Ctrl+A/E
-jump to line start/end, Alt+B/F move by words, Ctrl+W/K/U delete
-word/to-end/to-start, Up/Down recall past prompts, Ctrl+R
-reverse-searches them, ESC ESC rewinds the last exchange for editing,
-Shift+Tab toggles the approval mode, Ctrl+L clears the screen, a trailing
-backslash continues the line, and Tab completes `/commands` and `@paths`.
-`!CMD` runs a shell command and queues its output as context; `#NOTE`
-writes to the project's long-term memory; `?` shows the command list.
+The prompt is a readline-style editor over the whole message, however many
+lines it runs to and however wide the terminal: a sentence longer than the
+screen wraps into the rows it needs and stays editable there, with no
+continuation marker added to what you typed. Enter sends; Enter with any
+modifier — Shift, Ctrl or Alt, on terminals that can report one — plus
+Ctrl+J and a trailing backslash start a new line. Arrows move the cursor,
+Up/Down step between the message's own lines before reaching for the
+history, Ctrl+A/E and Home/End jump to line start/end, Alt+B/F and
+Ctrl/Alt+arrows move by words, Ctrl+W/K/U delete word/to-end/to-start,
+Ctrl+R reverse-searches past prompts, ESC ESC rewinds the last exchange for
+editing, Shift+Tab toggles the approval mode, Ctrl+L clears the screen, and
+Tab completes `/commands` and `@paths`. `!CMD` runs a shell command and
+queues its output as context; `#NOTE` writes to the project's long-term
+memory; `?` shows the command list.
 
 The session quits only via `/exit`, Ctrl+C or Ctrl+Z — ESC never quits,
 and a bare `exit`/`quit` asks "did you mean /exit? [y/N]" locally first —
@@ -207,7 +213,7 @@ shell profile.
 To pin a specific version:
 
 ```sh
-curl -o- https://raw.githubusercontent.com/38159/xagt/main/install.sh | XAGT_VERSION=v0.0.13 bash
+curl -o- https://raw.githubusercontent.com/38159/xagt/main/install.sh | XAGT_VERSION=v0.0.14 bash
 ```
 
 Set `XAGT_DIR=/opt/xagt` to change the install location.
@@ -223,13 +229,13 @@ irm https://raw.githubusercontent.com/38159/xagt/main/install.ps1 | iex
 The installer puts `xagt.exe` in `%USERPROFILE%\.xagt\bin`, seeds a config
 template at `%USERPROFILE%\.xagt\xagt.toml`, and adds the bin directory and
 `XAGT_CONFIG` to your user environment (open a new terminal afterwards). Pin a
-version with `$env:XAGT_VERSION = 'v0.0.13'` before running; change the
+version with `$env:XAGT_VERSION = 'v0.0.14'` before running; change the
 location with `$env:XAGT_DIR`.
 
 Verify:
 
 ```sh
-xagt --version   # → xagt v0.0.13
+xagt --version   # → xagt v0.0.14
 ```
 
 ## Update / uninstall
