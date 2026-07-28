@@ -101,7 +101,18 @@ vision agent for analysis immediately). Attachments cover plain text,
 
 Declare a capable agent once and it is used automatically whenever matching
 media is attached; an explicitly selected agent that lacks the flag refuses
-the prompt with a clear error instead of being silently rerouted:
+the prompt with a clear error instead of being silently rerouted. The
+session banner lists what each kind of work will reach, so the routing is
+visible before anything is attached:
+
+```
+xagt v0.0.15 — qwen/qwen3.7-max
+text   qwen/qwen3.7-max · qwen-vl/qwen3-vl-plus · qwen-omni/qwen3-omni-flash
+image  qwen-vl/qwen3-vl-plus · qwen-omni/qwen3-omni-flash
+video  qwen-vl/qwen3-vl-plus
+audio  qwen-omni/qwen3-omni-flash
+gen    img wan2.2-t2i-flash · vid wan2.2-t2v-plus · tts qwen3-tts-flash
+```
 
 ```toml
 [[agent]]
@@ -213,7 +224,7 @@ shell profile.
 To pin a specific version:
 
 ```sh
-curl -o- https://raw.githubusercontent.com/38159/xagt/main/install.sh | XAGT_VERSION=v0.0.14 bash
+curl -o- https://raw.githubusercontent.com/38159/xagt/main/install.sh | XAGT_VERSION=v0.0.15 bash
 ```
 
 Set `XAGT_DIR=/opt/xagt` to change the install location.
@@ -229,13 +240,13 @@ irm https://raw.githubusercontent.com/38159/xagt/main/install.ps1 | iex
 The installer puts `xagt.exe` in `%USERPROFILE%\.xagt\bin`, seeds a config
 template at `%USERPROFILE%\.xagt\xagt.toml`, and adds the bin directory and
 `XAGT_CONFIG` to your user environment (open a new terminal afterwards). Pin a
-version with `$env:XAGT_VERSION = 'v0.0.14'` before running; change the
+version with `$env:XAGT_VERSION = 'v0.0.15'` before running; change the
 location with `$env:XAGT_DIR`.
 
 Verify:
 
 ```sh
-xagt --version   # → xagt v0.0.14
+xagt --version   # → xagt v0.0.15
 ```
 
 ## Update / uninstall
