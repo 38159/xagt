@@ -23,6 +23,27 @@ prompt ──┬──▶ agent A answers ──▶ agent B reviews A ──┐
          └──▶ agent B answers ──▶ agent A reviews B ──┘
 ```
 
+**`xagt` — the interactive session, which acts.** What you type is *carried
+out*, not merely answered: the session has the same tools the executor does,
+bounded to the directory you started it in.
+
+```
+> the tests in internal/api are failing, fix them
+
+  turn 1: grep({"pattern":"func Test","path":"internal/api"})
+  turn 1: shell({"command":"go test ./internal/api/"})
+  checkpoint: pre-run state stashed as 30d099c1b3b7
+  turn 1: edit_file({"path":"internal/api/serve.go", …})
+
+● Fixed: serve() closed the listener before draining. Tests pass.
+```
+
+A question is still just answered — the model calls no tools when it needs
+none — and `/ask` guarantees it; `/tools off` (or `--no-tools`) turns acting
+off for the session. Every action lands in an audit log under `.xagt/`, and a
+git checkpoint is taken before the first change of each turn, so anything it
+did can be undone.
+
 **`xagt run` — the autonomous executor.** One task in, executed to completion
 with tools (files, shell, MCP servers, skills, long-term memory) and no
 approval prompts; autonomy is bounded by scope (`--yolo read|workspace|full`),
@@ -59,8 +80,8 @@ xagt update                     # self-update to the latest release
 The interactive session keeps the conversation as context, saves it under
 `~/.xagt/sessions` (continue any with `/resume`), streams token counts live
 and takes slash commands (Tab completes them): `/help` `/status` `/cost`
-`/agent` `/model` `/effort` `/mcp` `/skills` `/run` `/init` `/diff`
-`/review` `/resume` `/attach` `/paste` `/compact` `/clear` `/exit`
+`/ask` `/tools` `/agent` `/model` `/effort` `/mcp` `/skills` `/run` `/init`
+`/diff` `/review` `/resume` `/attach` `/paste` `/compact` `/clear` `/exit`
 (`--continue` / `--resume ID` reopen a saved conversation from the command
 line). Multi-line clipboard pastes insert lines instead of submitting
 (bracketed paste), `@path` in a message inlines that file, `/attach`
@@ -102,6 +123,35 @@ vision   = true
 video    = true
 audio    = true
 ```
+
+**What the agent can do.** Read (`read_file` with numbered lines,
+`list_dir`, `glob` with `**`, `grep` over file contents), write
+(`write_file`, `edit_file` singly or as an atomic batch, `mkdir`,
+`move_file`, `delete_file`), run (`shell`, with `background=true` plus
+`shell_output` / `shell_kill` for servers and watchers), plan
+(`update_plan`, shown in the terminal as it changes), delegate
+(`agents_run`), remember (`memory_*`, `skill`) and anything an MCP server
+adds.
+
+Reads and writes are confined to the working directory. `--read-root PATH`
+(or `[tools] read_roots`) widens reading when a project legitimately needs a
+sibling checkout; `--yolo full` lifts the boundary entirely and is meant for
+a container.
+
+**Two capabilities stay closed until asked for**, because the authority you
+delegate covers what *you* asked for — not instructions that arrive inside a
+web page or a README the agent was told to read:
+
+```sh
+xagt --allow-net       # web_fetch, web_search
+xagt --allow-computer  # screenshot, read_image, clipboard, open a file, notify
+```
+
+`[web]` and `[computer]` tables enable them permanently; `--allow-computer`
+adds mouse and keyboard control only when the `input` group is named
+explicitly. A screenshot is saved and then described by a `vision = true`
+agent, since a tool result is text. Browser automation is configuration
+rather than code — point an `[[mcp]]` block at Playwright MCP.
 
 **`xagt gen` — media generation.** Text-to-image, text-to-video and
 text-to-speech through DashScope's native generation endpoints, using the
@@ -157,7 +207,7 @@ shell profile.
 To pin a specific version:
 
 ```sh
-curl -o- https://raw.githubusercontent.com/38159/xagt/main/install.sh | XAGT_VERSION=v0.0.3 bash
+curl -o- https://raw.githubusercontent.com/38159/xagt/main/install.sh | XAGT_VERSION=v0.0.13 bash
 ```
 
 Set `XAGT_DIR=/opt/xagt` to change the install location.
@@ -173,13 +223,13 @@ irm https://raw.githubusercontent.com/38159/xagt/main/install.ps1 | iex
 The installer puts `xagt.exe` in `%USERPROFILE%\.xagt\bin`, seeds a config
 template at `%USERPROFILE%\.xagt\xagt.toml`, and adds the bin directory and
 `XAGT_CONFIG` to your user environment (open a new terminal afterwards). Pin a
-version with `$env:XAGT_VERSION = 'v0.0.3'` before running; change the
+version with `$env:XAGT_VERSION = 'v0.0.13'` before running; change the
 location with `$env:XAGT_DIR`.
 
 Verify:
 
 ```sh
-xagt --version   # → xagt v0.0.3
+xagt --version   # → xagt v0.0.13
 ```
 
 ## Update / uninstall
