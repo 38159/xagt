@@ -59,9 +59,27 @@ approval prompts; autonomy is bounded by scope (`--yolo read|workspace|full`),
 a turn/time budget and an audit log, with optional cross-check gates
 (`--plan-check`, `--final-review`). The executor can fan work out to
 parallel subagents (the `agents_run` tool): each gets the same tools and
-workspace with its own smaller budget, and cannot delegate further. The same executor is exposed by
+workspace with its own smaller budget, and cannot delegate further. When a
+run completes, xagt spends one more completion reflecting on what the run
+learned and writes up to three entries to the project's long-term memory on
+its own, so the next run starts warmer. The same executor is exposed by
 `xagt serve` as an OpenAI-compatible HTTP API plus an async task API, and by
 `xagt mcp-server` as an MCP tool (`run_task`) for other agents.
+
+**`xagt loop` — the unattended improvement loop.** Point it at a repository
+with a charter (`.xagt/loop/CHARTER.md`, a standing objective) and it runs
+cycle after cycle: analyze the repo, select one item, implement it in a
+dedicated worktree, run the verification gate, review the diff, record the
+result — then start again. Two distinct agents are required — one proposes
+and implements, the other selects and reviews — so no change is accepted on
+its author's own judgement. Everything lands on an `auto/loop/<timestamp>`
+branch: never `main`, never a push, never a tag. Budgets (`--max-cycles`,
+10 by default; `--max-total-time`) end a run cleanly, while circuit
+breakers (consecutive rejections or deferrals) stop it with a `HANDOFF.md`
+for a human; under launchd/systemd restart-on-success that difference is
+what keeps it running 24×7 yet halted when it is genuinely stuck. `xagt
+loop status` shows what it is doing; `xagt loop stop` ends it after the
+current phase.
 
 **Multimodal.** Attach images, videos and audio for analysis — each media
 prompt is routed automatically to the first configured agent that declares
@@ -83,6 +101,8 @@ xagt gen speech --voice Cherry "Welcome to the meeting" # text-to-speech
 xagt --cross-review "..."       # two agents cross-check each other
 xagt run --yolo workspace "..." # autonomous executor, no approvals
 xagt run --repl "..."           # same, but every tool action asks y/n first
+xagt loop                       # unattended improvement loop, cycle by cycle
+xagt loop status                # what the loop is doing; `xagt loop stop` ends it
 xagt update                     # self-update to the latest release
 ```
 
@@ -115,7 +135,7 @@ session banner lists what each kind of work will reach, so the routing is
 visible before anything is attached:
 
 ```
-xagt v0.0.16 — qwen/qwen3.7-max
+xagt v0.0.21 — qwen/qwen3.7-max
 text   qwen/qwen3.7-max · qwen-vl/qwen3-vl-plus · qwen-omni/qwen3-omni-flash
 image  qwen-vl/qwen3-vl-plus · qwen-omni/qwen3-omni-flash
 video  qwen-vl/qwen3-vl-plus
@@ -264,7 +284,7 @@ shell profile.
 To pin a specific version:
 
 ```sh
-curl -o- https://raw.githubusercontent.com/38159/xagt/main/install.sh | XAGT_VERSION=v0.0.16 bash
+curl -o- https://raw.githubusercontent.com/38159/xagt/main/install.sh | XAGT_VERSION=v0.0.21 bash
 ```
 
 Set `XAGT_DIR=/opt/xagt` to change the install location.
@@ -280,13 +300,13 @@ irm https://raw.githubusercontent.com/38159/xagt/main/install.ps1 | iex
 The installer puts `xagt.exe` in `%USERPROFILE%\.xagt\bin`, seeds a config
 template at `%USERPROFILE%\.xagt\xagt.toml`, and adds the bin directory and
 `XAGT_CONFIG` to your user environment (open a new terminal afterwards). Pin a
-version with `$env:XAGT_VERSION = 'v0.0.16'` before running; change the
+version with `$env:XAGT_VERSION = 'v0.0.21'` before running; change the
 location with `$env:XAGT_DIR`.
 
 Verify:
 
 ```sh
-xagt --version   # → xagt v0.0.16
+xagt --version   # → xagt v0.0.21
 ```
 
 ## Update / uninstall
@@ -328,6 +348,40 @@ priority = "secondary"     # only asked when the primary failed
 
 The file holds API keys — keep it mode `600`. It is read on every run, so
 edits need no reload.
+
+An agent does not have to be an endpoint. Give it a `command` instead and it
+becomes a **CLI agent**: xagt runs that command, hands it the prompt on
+stdin, and reads the answer from stdout — no API key, no model, the CLI
+already has its own. `claude`, `codex` and `gemini` all fit the contract:
+
+```toml
+[[agent]]
+name         = "claude-cli"
+command      = "claude -p --permission-mode plan"
+max_restarts = 10          # optional; consecutive restarts before it is stopped
+
+[[agent]]
+name    = "codex-cli"
+command = "codex exec --sandbox read-only -"
+
+[[agent]]
+name    = "gemini-cli"
+command = "gemini -p \"\"" # -p takes a value; the prompt arrives on stdin
+```
+
+A CLI agent answers, reviews and arbitrates — the failover chain, both
+`--cross-review` slots, the arbiter, and the verifier of `--plan-check` /
+`--final-review` / `xagt loop`. It cannot be the executor of `xagt run`
+(that contract is tool calls; this one is text in, text out), and it takes
+no media attachments. Every run is supervised: an unhealthy run — non-zero
+exit, a hang, exit 0 with nothing printed — is killed together with
+everything it started and retried after a growing pause, and after
+`max_restarts` consecutive failures (10 by default) the agent is stopped
+until a human checks the CLI. It is also confined, not trusted: each run
+gets a fresh, empty working directory — never your real one — and a run
+that leaves anything behind in it is a containment breach: the answer is
+discarded and the agent is stopped at once, whatever read-only flags its
+command line did or did not carry.
 
 ## Versions
 
