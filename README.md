@@ -325,6 +325,17 @@ the whole turn, so the stretches between output are visibly alive:
 
 ## Configure
 
+The quick way (v0.0.23 and later) is one command — give it a provider and an
+API key, in that order, and it verifies the key, then writes a ready-to-use
+config:
+
+```sh
+xagt --auto-config qwen <api-key>        # or: openai, qwen-cn
+```
+
+It never replaces a config that already holds a real key; those are edited
+by hand, as below.
+
 `~/.xagt/xagt.toml` (or the file `XAGT_CONFIG` points at) holds one
 `[[agent]]` table per OpenAI-compatible endpoint:
 
