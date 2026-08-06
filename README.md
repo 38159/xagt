@@ -4,6 +4,61 @@ A CLI agent that fronts any number of **OpenAI-compatible LLM APIs** — OpenAI,
 Qwen (DashScope compatible mode), a local gateway — defined in one TOML config
 file.
 
+## Install
+
+### Linux / macOS (amd64, arm64)
+
+```sh
+curl -o- https://raw.githubusercontent.com/38159/xagt/main/install.sh | bash
+```
+
+The installer picks the **latest release tag**, installs its prebuilt binary
+to `~/.xagt/bin/xagt`, seeds a config template at `~/.xagt/xagt.toml` (an
+existing file is never touched), and adds `PATH` / `XAGT_CONFIG` lines to your
+shell profile.
+
+To pin a specific version:
+
+```sh
+curl -o- https://raw.githubusercontent.com/38159/xagt/main/install.sh | XAGT_VERSION=v0.0.21 bash
+```
+
+Set `XAGT_DIR=/opt/xagt` to change the install location.
+
+### Windows (amd64, arm64)
+
+In PowerShell:
+
+```powershell
+irm https://raw.githubusercontent.com/38159/xagt/main/install.ps1 | iex
+```
+
+The installer puts `xagt.exe` in `%USERPROFILE%\.xagt\bin`, seeds a config
+template at `%USERPROFILE%\.xagt\xagt.toml`, and adds the bin directory and
+`XAGT_CONFIG` to your user environment (open a new terminal afterwards). Pin a
+version with `$env:XAGT_VERSION = 'v0.0.21'` before running; change the
+location with `$env:XAGT_DIR`.
+
+Verify:
+
+```sh
+xagt --version   # → xagt v0.0.21
+```
+
+## Update / uninstall
+
+An installed xagt updates itself:
+
+```sh
+xagt update      # check the latest tag, swap the binary atomically
+```
+
+Re-running `install.sh` also works — when xagt is already installed it shows
+the current version and asks **[u]pdate / [r]emove / [q]uit** on the terminal.
+An update lands wherever the binary already lives (system-wide installs
+included); removal deletes only the binary and keeps the config. Without a
+terminal, updating is the default.
+
 ## Overview
 
 **Default mode — failover.** The `primary` agent answers; a `secondary` agent
@@ -267,61 +322,6 @@ the whole turn, so the stretches between output are visibly alive:
 ```
 ⠹ shell… (3m 9s · ↓ 7.5k tokens)
 ```
-
-## Install
-
-### Linux / macOS (amd64, arm64)
-
-```sh
-curl -o- https://raw.githubusercontent.com/38159/xagt/main/install.sh | bash
-```
-
-The installer picks the **latest release tag**, installs its prebuilt binary
-to `~/.xagt/bin/xagt`, seeds a config template at `~/.xagt/xagt.toml` (an
-existing file is never touched), and adds `PATH` / `XAGT_CONFIG` lines to your
-shell profile.
-
-To pin a specific version:
-
-```sh
-curl -o- https://raw.githubusercontent.com/38159/xagt/main/install.sh | XAGT_VERSION=v0.0.21 bash
-```
-
-Set `XAGT_DIR=/opt/xagt` to change the install location.
-
-### Windows (amd64, arm64)
-
-In PowerShell:
-
-```powershell
-irm https://raw.githubusercontent.com/38159/xagt/main/install.ps1 | iex
-```
-
-The installer puts `xagt.exe` in `%USERPROFILE%\.xagt\bin`, seeds a config
-template at `%USERPROFILE%\.xagt\xagt.toml`, and adds the bin directory and
-`XAGT_CONFIG` to your user environment (open a new terminal afterwards). Pin a
-version with `$env:XAGT_VERSION = 'v0.0.21'` before running; change the
-location with `$env:XAGT_DIR`.
-
-Verify:
-
-```sh
-xagt --version   # → xagt v0.0.21
-```
-
-## Update / uninstall
-
-An installed xagt updates itself:
-
-```sh
-xagt update      # check the latest tag, swap the binary atomically
-```
-
-Re-running `install.sh` also works — when xagt is already installed it shows
-the current version and asks **[u]pdate / [r]emove / [q]uit** on the terminal.
-An update lands wherever the binary already lives (system-wide installs
-included); removal deletes only the binary and keeps the config. Without a
-terminal, updating is the default.
 
 ## Configure
 
